@@ -50,7 +50,9 @@ Your name and email are stored in `~/.gitconfig.local`, which is gitignored. Eac
 manually:
 
 ```ini
+
 # ~/.gitconfig.local
+
 [user]
 name = First Last
 email = you@example.com
@@ -58,8 +60,8 @@ email = you@example.com
 
 ## Local ZSH config
 
-`~/.dotfiles/zsh/local.zsh` is sourced automatically but never tracked by git. Use it for anything machine-specific you
-don't want committed.
+`~/.dotfiles/zsh/local.zsh` is sourced automatically but never tracked by git. Use it for anything
+machine-specific you don't want committed.
 
 ### Suggestions for local.zsh
 
@@ -68,9 +70,21 @@ don't want committed.
 - Custom aliases and functions
 - Project or machine-specific environment variables
 
+## ZSH config structure
+
+```text
+.dotfiles/zsh/
+  _load.zsh ← entry point, controls load order for parts/
+  parts/
+    function.zsh ← shared functions, loaded first
+    profile.zsh ← env vars, shell options, tool config
+    alias.zsh ← aliases, loaded after functions and profile
+  local.zsh ← machine-specific, gitignored, loaded last by OMZ
+```
+
 ## Updating
 
-Re-run the install script, or use the `dotupdate` alias from any terminal:
+Re-run the installation script, or use the `dotupdate` alias from any terminal:
 
 ```bash
 dotupdate
@@ -83,8 +97,8 @@ Use the `config` alias to run git commands against the dotfiles repo:
 ```bash
 config status
 config checkout -b new-branch
-config add ~/.dotfiles/zsh/function.zsh
-config commit -m "update generic functions"
+config add ~/.dotfiles/zsh/parts/function.zsh
+config commit -m "update functions"
 config push
 ```
 
