@@ -1,0 +1,8 @@
+*~
+~/.gitconfig.local
+~/.dotfiles/zsh/local.zsh
+.*.swp
+.DS_Store
+.idea
+.vscode
+.env

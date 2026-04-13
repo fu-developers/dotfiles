@@ -1,0 +1,334 @@
+#!/usr/bin/env bash
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
+command_exists() {
+    command -v "$@" >/dev/null 2>&1
+}
+
+# Detect OS
+case "$(uname -s)" in
+    Darwin) OS="mac" ;;
+    Linux)  OS="linux" ;;
+    *)      echo "Unsupported OS: $(uname -s)"; exit 1 ;;
+esac
+
+# Detect architecture for Linux-specific downloads
+case "$(uname -m)" in
+    x86_64)  AWS_ARCH="x86_64";  SSM_ARCH="ubuntu_64bit" ;;
+    aarch64) AWS_ARCH="aarch64"; SSM_ARCH="ubuntu_arm64" ;;
+    *)       echo "Unsupported architecture: $(uname -m)"; exit 1 ;;
+esac
+
+# Cross-platform sed -i (macOS requires an empty string arg)
+sedi() {
+    if [ "$OS" = "mac" ]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
+# ─── Git identity setup ───────────────────────────────────────────────────────
+
+if [ ! -f "$HOME/.gitconfig.local" ]; then
+    echo "Git identity setup"
+    echo "─────────────────────────────────────"
+
+    read -p "Full name (for git commits): " git_name
+
+    if [ -z "$git_name" ]; then
+        echo "Name is required. Aborting."
+        exit 1
+    fi
+
+    cat > "$HOME/.gitconfig.local" <<EOF
+[user]
+    name = $git_name
+EOF
+
+    echo ".gitconfig.local created."
+    echo
+else
+    echo ".gitconfig.local already exists, skipping git identity setup."
+    echo
+fi
+
+# ─── Package manager setup ────────────────────────────────────────────────────
+
+if [ "$OS" = "mac" ]; then
+    if ! command_exists brew; then
+        echo "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        # Add to PATH for Apple Silicon
+        [ -f "/opt/homebrew/bin/brew" ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+        echo "Updating Homebrew..."
+        brew update
+    fi
+else
+    sudo apt update
+fi
+
+# ─── Dotfiles clone or update ─────────────────────────────────────────────────
+
+echo "Checking if repo was installed previously..."
+
+if [ ! -d "$HOME/.dotfiles-git" ]; then
+    echo "Cloning dotfiles to home directory..."
+    git clone --bare https://github.com/nmathur94/dotfiles-public.git "$HOME/.dotfiles-git" || {
+        echo "Failed to clone dotfiles. Aborting."
+        exit 1
+    }
+    git --git-dir="$HOME/.dotfiles-git" --work-tree="$HOME" checkout
+else
+    echo "Directory already exists, pulling latest..."
+    git --git-dir="$HOME/.dotfiles-git" --work-tree="$HOME" pull
+fi
+
+echo "Setting untracked files to not show..."
+git --git-dir="$HOME/.dotfiles-git" --work-tree="$HOME" config --local status.showUntrackedFiles no
+git --git-dir="$HOME/.dotfiles-git" --work-tree="$HOME" status
+
+# ─── Untracked Custom Alias/Fn─────────────────────────────────────────────────
+
+if [ ! -f "$HOME/.dotfiles/zsh/local.zsh" ]; then
+    echo "Creating .dotfiles/zsh/local.zsh"
+    echo "In .dotfiles/zsh/local.zsh, you can add specific custom functions/aliases/env variables and is untracked"
+
+    read -p "Create local.zsh for machine-specific zsh config? [y/N] " confirm
+    case "$confirm" in
+    y*|Y*)
+        cat > "$HOME/.dotfiles/zsh/local.zsh" << 'EOF'
+# local.zsh — machine-specific config, not tracked by git
+# Add aliases, exports, or anything specific to this machine here
+
+EOF
+        echo "local.zsh created at ~/.dotfiles/zsh/local.zsh"
+    ;;
+    *) echo "Skipping local.zsh. If you want this after, you can create that file manually or rerun this script and answer Y" ;;
+    esac
+else
+    echo "local.zsh already exists, skipping."
+fi
+
+# ─── ZSH ──────────────────────────────────────────────────────────────────────
+
+if ! command_exists zsh; then
+    echo "Installing ZSH..."
+    if [ "$OS" = "mac" ]; then
+        brew install zsh
+    else
+        sudo apt install -y zsh
+    fi
+fi
+zsh --version
+
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    echo "Installing Oh My Zsh..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    echo "Setting ZSH as default shell..."
+    chsh -s "$(which zsh)"
+fi
+
+echo "Setting custom path for Oh My Zsh..."
+sedi 's|#\sZSH_CUSTOM=/path/to/new-custom-folder|ZSH_CUSTOM=$HOME/.dotfiles/zsh|' ~/.zshrc
+
+# ─── NVM ──────────────────────────────────────────────────────────────────────
+
+export NVM_DIR="$HOME/.nvm"
+
+if [ ! -d "$NVM_DIR" ]; then
+    echo "Installing NVM..."
+    git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+
+    cat >> ~/.zshrc << 'EOF'
+
+## nvm setup
+zstyle ":omz:plugins:nvm" autoload yes
+zstyle ":omz:plugins:nvm" silent-autoload yes
+#zstyle ":omz:plugins:nvm" lazy yes
+EOF
+else
+    echo "NVM already installed, checking for updates..."
+    git -C "$NVM_DIR" fetch --tags origin
+fi
+
+cd "$NVM_DIR" || { echo "Failed to cd to $NVM_DIR"; exit 1; }
+git checkout "$(git describe --abbrev=0 --tags --match "v[0-9]*" "$(git rev-list --tags --max-count=1)")"
+\. "$NVM_DIR/nvm.sh"
+cd "$HOME"
+
+# ─── ZSH Plugins ──────────────────────────────────────────────────────────────
+
+echo "Installing custom plugins: zsh-autosuggestions, zsh-syntax-highlighting..."
+
+if [ ! -d "$HOME/.dotfiles/zsh/plugins/zsh-autosuggestions" ]; then
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.dotfiles/zsh/plugins/zsh-autosuggestions"
+else
+    git -C "$HOME/.dotfiles/zsh/plugins/zsh-autosuggestions" pull
+fi
+
+if [ ! -d "$HOME/.dotfiles/zsh/plugins/zsh-syntax-highlighting" ]; then
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.dotfiles/zsh/plugins/zsh-syntax-highlighting"
+else
+    git -C "$HOME/.dotfiles/zsh/plugins/zsh-syntax-highlighting" pull
+fi
+
+echo "Enabling plugins..."
+sedi 's|plugins=(.*|plugins=(git docker aws nvm zsh-autosuggestions zsh-syntax-highlighting terraform ssh-agent)|' ~/.zshrc
+
+# ─── AWS CLI ──────────────────────────────────────────────────────────────────
+
+if [ "$OS" = "mac" ]; then
+    if ! command_exists aws; then
+        echo "Installing AWS CLI v2..."
+        brew install awscli
+    else
+        echo "Updating AWS CLI v2..."
+        brew upgrade awscli || true
+    fi
+else
+    if ! command_exists aws; then
+        echo "Installing AWS CLI v2..."
+    else
+        echo "Updating AWS CLI v2..."
+    fi
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" -o "awscliv2.zip"
+    sudo apt install -y unzip
+    unzip awscliv2.zip
+    rm awscliv2.zip
+    if command_exists aws; then
+        sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+    else
+        sudo ./aws/install
+    fi
+    rm -rf ./aws
+fi
+aws --version
+
+# ─── AWS Session Manager ──────────────────────────────────────────────────────
+
+echo "Installing/updating AWS Session Manager plugin..."
+
+if [ "$OS" = "mac" ]; then
+    brew install --cask session-manager-plugin || true
+else
+    if ! command_exists session-manager-plugin; then
+        echo "Installing AWS Session Manager plugin..."
+    else
+        echo "Updating AWS Session Manager plugin..."
+    fi
+    curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/${SSM_ARCH}/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+    sudo dpkg -i session-manager-plugin.deb
+    rm session-manager-plugin.deb
+fi
+session-manager-plugin --version
+
+# ─── Terraform ────────────────────────────────────────────────────────────────
+
+if [ "$OS" = "mac" ]; then
+    if ! command_exists terraform; then
+        echo "Installing Terraform..."
+        brew tap hashicorp/tap
+        brew install hashicorp/tap/terraform
+    else
+        echo "Updating Terraform..."
+        brew upgrade hashicorp/tap/terraform || true
+    fi
+else
+    if ! command_exists terraform; then
+        echo "Installing Terraform..."
+        curl -fsSL https://apt.releases.hashicorp.com/gpg \
+            | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+            https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+            | sudo tee /etc/apt/sources.list.d/hashicorp.list
+        sudo apt update
+    else
+        echo "Updating Terraform..."
+    fi
+    sudo apt install -y terraform
+fi
+
+# ─── Yarn ─────────────────────────────────────────────────────────────────────
+
+if command_exists node; then
+    if ! command_exists yarn; then
+        echo "Installing Yarn..."
+        if [ "$OS" = "mac" ]; then
+            brew install yarn
+        else
+            curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg \
+                | sudo gpg --dearmor -o /usr/share/keyrings/yarn-archive-keyring.gpg
+            echo "deb [signed-by=/usr/share/keyrings/yarn-archive-keyring.gpg] https://dl.yarnpkg.com/debian/ stable main" \
+                | sudo tee /etc/apt/sources.list.d/yarn.list
+            sudo apt update && sudo apt install -y yarn --no-install-recommends
+        fi
+    fi
+fi
+
+# ─── PHP ──────────────────────────────────────────────────────────────────────
+
+if [ "$OS" = "mac" ]; then
+    brew tap shivammathur/php 2>/dev/null || true
+    for version in 8.0 8.1 8.2 8.3 8.4; do
+        echo "Installing/updating PHP ${version}..."
+        brew install "shivammathur/php/php@${version}" || brew upgrade "shivammathur/php/php@${version}" || true
+    done
+else
+    if ! command_exists php8.1; then
+        echo "Adding PHP PPA..."
+        sudo add-apt-repository ppa:ondrej/php -y
+        sudo apt update
+    fi
+
+    echo "Installing/Updating PHP..."
+    sudo apt install -y \
+        php8.0-{cli,xml,zip,curl,mbstring,gd,common,bcmath,intl} \
+        php8.1-{cli,xml,zip,curl,mbstring,gd,common,bcmath,intl} \
+        php8.2-{cli,xml,zip,curl,mbstring,gd,common,bcmath,intl} \
+        php8.3-{cli,xml,zip,curl,mbstring,gd,common,bcmath,intl} \
+        php8.4-{cli,xml,zip,curl,mbstring,gd,common,bcmath,intl}
+fi
+
+# ─── Composer ─────────────────────────────────────────────────────────────────
+
+[ "$OS" = "linux" ] && sudo rm -f /usr/local/bin/composer2
+
+if ! command_exists composer; then
+    echo "Installing Composer V2..."
+    EXPECTED_CHECKSUM="$(curl -sS https://composer.github.io/installer.sig)"
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+    if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+        >&2 echo "ERROR: Invalid installer checksum"
+        rm composer-setup.php
+        exit 1
+    fi
+
+    if [ "$OS" = "mac" ]; then
+        php composer-setup.php --install-dir="$(brew --prefix)/bin" --filename=composer --2
+    else
+        sudo php composer-setup.php --install-dir=/usr/local/bin/ --filename=composer --2
+    fi
+    rm composer-setup.php
+else
+    echo "Updating Composer..."
+    composer self-update --2
+fi
+
+# ─── Final cleanup ────────────────────────────────────────────────────────────
+
+if [ "$OS" = "mac" ]; then
+    brew cleanup
+else
+    sudo apt upgrade -y
+    sudo apt dist-upgrade -y
+    sudo apt autoremove -y
+    sudo apt autoclean
+fi
+
+echo ""
+echo "Done. Restart your terminal or run: exec zsh"

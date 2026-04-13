@@ -1,0 +1,38 @@
+# core {{{
+[core]
+	editor = /usr/bin/nano
+	autocrlf = input
+	excludesfile = ~/.gitignore_global
+#}}}
+# user {{{
+[user]
+
+#}}}
+# color {{{
+[color]
+	branch = auto
+	diff = auto
+	status = auto
+
+[color "branch"]
+	current = red reverse
+	local = blue
+	remote = green
+
+[color "diff"]
+	meta = yellow
+	frag = magenta
+	old = red bold
+	new = green
+	plain = white
+
+[color "status"]
+	added = yellow
+	changed = green
+	untracked = cyan
+
+# }}}
+# local {{{
+[include]
+	path = ~/.gitconfig.local
+# }}}
