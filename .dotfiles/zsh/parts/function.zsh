@@ -91,3 +91,11 @@ function getEcrLogin {
 function git-list-no-remote {
 	git branch -r | awk '{print $1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print $1}'
 }
+
+function fzf {
+    if [[ -n "$_BAT" ]]; then
+        command fzf --preview "$_BAT --color=always --line-range=:50 {}" "$@"
+    else
+        command fzf "$@"
+    fi
+}

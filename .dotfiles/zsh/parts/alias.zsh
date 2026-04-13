@@ -27,16 +27,16 @@ fi
 
 if command_exists fzf; then
     # Interactive git branch checkout
-    alias fgco='git branch | fzf | xargs git checkout'
+    alias fgco="git branch | fzf --preview 'git log --color=always {1}' | xargs git checkout"
 
     # Interactive git branch delete
-    alias fgbd='git branch | fzf -m | xargs git branch -d'
+    alias fgbd="git branch | fzf -m --preview 'git log --color=always {1}' | xargs git branch -d"
 
     # Log search with commit preview
-    alias fglog='git log --oneline | fzf --preview "git show --color=always {1}"'
+    alias fglog="git log --oneline | fzf --preview 'git show --color=always {1}'"
 
     # Interactive process kill
-    alias fkill='ps aux | fzf -m | awk '"'"'{print $2}'"'"' | xargs kill'
+    alias fkill="ps aux | fzf -m | awk '{print \$2}' | xargs kill"
 
     # Interactive cd into any subdirectory
     alias fcd='cd "$(find . -type d | fzf)"'
@@ -46,6 +46,10 @@ if command_exists fzf; then
 
     # Interactive history search and run
     alias fhist='eval "$(history | fzf | sed '"'"'s/ *[0-9]* *//'"'"')"'
+
+    if [[ -n "$_BAT" ]]; then
+        alias fgco="git branch | fzf --preview '$_BAT --color=always --line-range=:50 {}' | xargs git checkout"
+    fi
 fi
 
 # ─── bat ──────────────────────────────────────────────────────────────────────
