@@ -17,23 +17,25 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 setopt SHARE_HISTORY
 
+# ─── Resolve bat binary ───────────────────────────────────────────────────────
+
+if command_exists batcat; then
+    _BAT="batcat"
+elif command_exists bat; then
+    _BAT="bat"
+fi
+
 # ─── bat ──────────────────────────────────────────────────────────────────────
 
-if command_exists bat || command_exists batcat; then
+if [[ -n "$_BAT" ]]; then
     export BAT_THEME="base16"
     export BAT_STYLE="numbers,changes,header"
-    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+    export MANPAGER="sh -c 'col -bx | $_BAT -l man -p'"
 fi
 
 # ─── fzf ──────────────────────────────────────────────────────────────────────
 
 if command_exists fzf; then
-    # Resolve correct bat binary name
-    if command_exists batcat; then
-        _BAT="batcat"
-    elif command_exists bat; then
-        _BAT="bat"
-    fi
     # Use fd if available — faster, respects .gitignore
     if command_exists fd; then
         export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
