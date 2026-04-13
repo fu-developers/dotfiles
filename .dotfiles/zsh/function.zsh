@@ -62,7 +62,15 @@ function aws_ssm {
 }
 
 function getEcrLogin {
-    aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin $1.dkr.ecr.ap-southeast-2.amazonaws.com
+    local account_id="$1"
+    local region="${2:-${AWS_DEFAULT_REGION:-$(aws configure get region 2>/dev/null)}}"
+
+    if [ -z "$region" ]; then
+        echo "No AWS region found. Set AWS_DEFAULT_REGION, use asp (aws plugin) to select a profile, or pass region as second argument."
+        return 1
+    fi
+
+    aws ecr get-login-password --region "$region" | docker login --username AWS --password-stdin "$account_id.dkr.ecr.$region.amazonaws.com"
 }
 
 function git-list-no-remote {
