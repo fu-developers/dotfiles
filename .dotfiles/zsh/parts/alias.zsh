@@ -32,6 +32,9 @@ if command_exists fzf; then
     # Interactive git branch delete
     alias fgbd='git branch | fzf -m | xargs git branch -d'
 
+    # Log search with commit preview
+    alias fglog='git log --oneline | fzf --preview "git show --color=always {1}"'
+
     # Interactive process kill
     alias fkill='ps aux | fzf -m | awk '"'"'{print $2}'"'"' | xargs kill'
 
