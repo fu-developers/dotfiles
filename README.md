@@ -2,19 +2,30 @@
 
 Personal development environment configuration for macOS and Linux (Ubuntu/WSL2).
 
+## Contents
+
+- [What's included](#whats-included)
+- [Install](#install)
+- [First-time setup](#first-time-setup)
+- [Git identity](#git-identity)
+- [Local ZSH config](#local-zsh-config)
+- [Updating](#updating)
+- [Managing dotfiles](#managing-dotfiles)
+
 ## What's included
 
 - ZSH + Oh My Zsh with custom plugins and theme
 - Git configuration with local identity override
-  - By default, only name is given
-  - Email set on repo level but can be added manually to `~/.gitconfig.local` if all repo's use same email
+    - By default, only name is set — email can be added manually to `~/.gitconfig.local`
 - AWS CLI v2 + Session Manager plugin
 - Terraform
 - NVM (Node Version Manager)
 - Yarn
 - PHP 8.0–8.4 + Composer
+- `fzf` — fuzzy finder with zsh history, file, and directory search
+- `bat` — syntax highlighted cat replacement with git change indicators
+- `nano` — configured with syntax highlighting, line numbers, and sensible defaults
 - Custom ZSH aliases, functions, and profile
-  - - You can configure which theme you like among other things within the machine specific config [See Linked](#local-suggestions)
 
 ## Install
 
@@ -35,7 +46,7 @@ The install script will prompt you to:
 
 ## Git identity
 
-Your name and email are stored in `~/.gitconfig.local`, which is gitignored. Each machine has its own copy. To update it
+Your name and email are stored in `~/.gitconfig.local`, which is gitignored. Each machine has its own copy. To update
 manually:
 
 ```ini
@@ -47,14 +58,15 @@ email = you@example.com
 
 ## Local ZSH config
 
-`~/.dotfiles/zsh/local.zsh` is sourced automatically but never tracked by git. Use it for machine-specific aliases,
-exports, or anything you don't want committed.
+`~/.dotfiles/zsh/local.zsh` is sourced automatically but never tracked by git. Use it for anything machine-specific you
+don't want committed.
 
-### Local Suggestions
-- ZSH_THEME and other settings for Oh My Zsh
-- Custom Functions
-- Aliases
-- Development Environment Variables
+### Suggestions for local.zsh
+
+- `ZSH_THEME` and other Oh My Zsh settings
+- `ENABLE_CORRECTION="true"` to enable zsh autocorrect
+- Custom aliases and functions
+- Project or machine-specific environment variables
 
 ## Updating
 
@@ -76,4 +88,4 @@ config commit -m "update generic functions"
 config push
 ```
 
-Submit a pr to merge back in for others to pull in
+Submit a PR to merge changes back in for others to pull.
