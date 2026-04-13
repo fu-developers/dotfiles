@@ -1,4 +1,8 @@
 ## Functions
+function command_exists {
+  command -v "$@" >/dev/null 2>&1
+}
+
 function docker_boot {
     docker compose -f ~/docker/$1/docker-compose.yml up -d
 }
@@ -21,7 +25,7 @@ function common_stop {
 # Returns the path to first file found or fails
 # USAGE:
 #    upsearch path1 path2 ...
-function upsearch() {
+function upsearch {
   # Parse CLI options
   zparseopts -E -D \
     s=silent -silent=silent
