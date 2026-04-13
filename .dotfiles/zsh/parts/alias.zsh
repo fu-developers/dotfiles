@@ -47,9 +47,7 @@ fi
 
 # ─── bat ──────────────────────────────────────────────────────────────────────
 
-if command_exists bat || command_exists batcat; then
-    # Resolve correct binary to run in subshell
-    _BAT=$(command_exists batcat && echo "batcat" || echo "bat")
+if [[ -n "$_BAT" ]]; then
     # Show all available themes with a preview
     alias bat-themes="$_BAT --list-themes | fzf --preview \"$_BAT --theme={} --color=always ~/.zshrc\""
 
