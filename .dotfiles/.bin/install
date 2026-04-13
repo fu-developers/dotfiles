@@ -119,7 +119,7 @@ if ! command_exists zsh; then
     if [ "$OS" = "mac" ]; then
         brew install zsh
     else
-        sudo apt install -y zsh
+        sudo apt install -y zsh nano
     fi
 fi
 zsh --version
@@ -158,6 +158,53 @@ cd "$NVM_DIR" || { echo "Failed to cd to $NVM_DIR"; exit 1; }
 git checkout "$(git describe --abbrev=0 --tags --match "v[0-9]*" "$(git rev-list --tags --max-count=1)")"
 \. "$NVM_DIR/nvm.sh"
 cd "$HOME"
+
+# ─── Nano config ──────────────────────────────────────────────────────────────
+
+if [ ! -f "$HOME/.nanorc" ]; then
+    echo "Creating .nanorc..."
+
+    if [ "$OS" = "mac" ]; then
+        # Install newer nano via brew — macOS ships with an ancient version
+        if ! command_exists nano || [ "$(nano --version | head -1 | awk '{print $4}' | cut -d. -f1)" -lt 4 ]; then
+            brew install nano
+        fi
+        NANO_SYNTAX="$(brew --prefix)/share/nano/*.nanorc"
+    else
+        NANO_SYNTAX="/usr/share/nano/*.nanorc"
+    fi
+
+    cat > "$HOME/.nanorc" <<EOF
+# Syntax highlighting
+include "$NANO_SYNTAX"
+
+# Line numbers
+set linenumbers
+
+# Show cursor position
+set constantshow
+
+# Soft wrap long lines
+set softwrap
+
+# Tab = 4 spaces
+set tabsize 4
+set tabstospaces
+
+# Auto indent
+set autoindent
+
+# Smooth scrolling
+set smooth
+
+# No help bar at bottom
+set nohelp
+EOF
+
+    echo ".nanorc created."
+else
+    echo ".nanorc already exists, skipping."
+fi
 
 # ─── ZSH Plugins ──────────────────────────────────────────────────────────────
 
