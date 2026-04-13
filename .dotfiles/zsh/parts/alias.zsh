@@ -48,12 +48,14 @@ fi
 # ─── bat ──────────────────────────────────────────────────────────────────────
 
 if command_exists bat || command_exists batcat; then
+    # Resolve correct binary to run in subshell
+    _BAT=$(command_exists batcat && echo "batcat" || echo "bat")
     # Show all available themes with a preview
-    alias bat-themes='bat --list-themes | fzf --preview "bat --theme={} --color=always ~/.zshrc"'
+    alias bat-themes="$_BAT --list-themes | fzf --preview \"$_BAT --theme={} --color=always ~/.zshrc\""
 
     # Print with line ranges
-    alias batp='bat --paging=always'
+    alias batp='$_BAT --paging=always'
 
     # Diff two files with syntax highlighting
-    alias batdiff='bat --diff'
+    alias batdiff='$_BAT --diff'
 fi

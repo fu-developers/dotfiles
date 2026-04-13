@@ -28,6 +28,12 @@ fi
 # ─── fzf ──────────────────────────────────────────────────────────────────────
 
 if command_exists fzf; then
+    # Resolve correct bat binary name
+    if command_exists batcat; then
+        _BAT="batcat"
+    elif command_exists bat; then
+        _BAT="bat"
+    fi
     # Use fd if available — faster, respects .gitignore
     if command_exists fd; then
         export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
@@ -45,11 +51,9 @@ if command_exists fzf; then
     "
 
     # Add bat preview if available
-    if command_exists bat || command_exists batcat; then
-        export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS
-        --preview 'bat --color=always --line-range=:50 {}'
-        "
-        export FZF_CTRL_T_OPTS="--preview 'bat --color=always --line-range=:100 {}' --preview-window=right:50%:wrap"
+    if [[ -n "$_BAT" ]]; then
+        export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --preview '$_BAT --color=always --line-range=:50 {}'"
+        export FZF_CTRL_T_OPTS="--preview '$_BAT --color=always --line-range=:100 {}' --preview-window=right:50%:wrap"
     fi
 
     export FZF_ALT_C_OPTS="--preview 'ls -la {}'"
