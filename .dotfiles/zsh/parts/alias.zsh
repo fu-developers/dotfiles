@@ -54,8 +54,8 @@ if command_exists bat || command_exists batcat; then
     alias bat-themes="$_BAT --list-themes | fzf --preview \"$_BAT --theme={} --color=always ~/.zshrc\""
 
     # Print with line ranges
-    alias batp='$_BAT --paging=always'
+    alias batp="$_BAT --paging=always"
 
     # Diff two files with syntax highlighting
-    alias batdiff='$_BAT --diff'
+    alias batdiff="$_BAT --diff"
 fi
