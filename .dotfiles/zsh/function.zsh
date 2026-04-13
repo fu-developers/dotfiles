@@ -61,6 +61,17 @@ function upsearch {
   return 1
 }
 
+# Switch PHP Versions
+_php_switch() {
+    local version="$1"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        brew unlink php 2>/dev/null || true
+        brew link --overwrite --force "php@${version}"
+    else
+        sudo update-alternatives --set php "/usr/bin/php${version}"
+    fi
+}
+
 function aws_ssm {
     aws ssm start-session --target $1
 }
