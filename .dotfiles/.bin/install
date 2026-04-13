@@ -66,6 +66,7 @@ if [ "$OS" = "mac" ]; then
         echo "Updating Homebrew..."
         brew update
     fi
+    brew install fzf bat
 else
     sudo apt update
 fi
@@ -120,6 +121,13 @@ if ! command_exists zsh; then
         brew install zsh
     else
         sudo apt install -y zsh nano
+    fi
+fi
+
+if ! command_exists fzf; then
+    echo "Installing FZF and..."
+    if [ "$OS" = "linux" ]; then
+        sudo apt install -y fzf bat
     fi
 fi
 zsh --version
@@ -220,7 +228,7 @@ else
 fi
 
 echo "Enabling plugins..."
-sedi 's|plugins=(.*|plugins=(git docker aws nvm zsh-autosuggestions zsh-syntax-highlighting terraform ssh-agent)|' ~/.zshrc
+sedi 's|plugins=(.*|plugins=(git docker aws nvm fzf zsh-autosuggestions zsh-syntax-highlighting terraform ssh-agent)|' ~/.zshrc
 
 # ─── AWS CLI ──────────────────────────────────────────────────────────────────
 
