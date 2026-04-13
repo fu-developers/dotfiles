@@ -21,7 +21,7 @@ Personal development environment configuration for macOS and Linux (Ubuntu/WSL2)
 Run this in your terminal:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/nmathur94/dotfiles-public/master/.dotfiles/.bin/install)
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nmathur94/dotfiles-public/master/.dotfiles/.bin/install)"
 ```
 
 The script is idempotent — safe to re-run to update tools and pull the latest dotfiles.
