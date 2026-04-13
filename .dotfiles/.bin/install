@@ -194,9 +194,6 @@ set tabstospaces
 # Auto indent
 set autoindent
 
-# Smooth scrolling
-set smooth
-
 # No help bar at bottom
 set nohelp
 EOF
