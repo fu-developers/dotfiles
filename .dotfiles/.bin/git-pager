@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if command -v batcat >/dev/null 2>&1; then
+  batcat --paging=always -l diff
+elif command -v bat >/dev/null 2>&1; then
+  bat --paging=always -l diff
+else
+    less
+fi

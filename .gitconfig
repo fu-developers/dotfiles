@@ -3,6 +3,7 @@
 	editor = /usr/bin/nano
 	autocrlf = input
 	excludesfile = ~/.gitignore_global
+    pager = ~/.dotfiles/.bin/git-pager
 #}}}
 # user {{{
 [user]
